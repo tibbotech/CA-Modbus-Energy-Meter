@@ -1,0 +1,69 @@
+<?
+	include "global.tbh"
+	dim flag as ok_ng
+	declare rx_data as string
+?>
+
+<html>
+<HEAD>
+<META HTTP-EQUIV="Expires" CONTENT="Tue, 01 Jan 1980 1:00:00 GMT">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<link rel="stylesheet" type="text/css" href="tables.css" />
+<script type="text/javascript">
+function FormSubmit()
+{
+document.getElementById("myForm").submit()
+}
+function IndexPage()
+{
+  window.top.location.replace("Index.html")
+}
+
+</script>
+
+</HEAD>
+
+<body <?flag = html_login_verify(yes)?>>
+<? 
+	if flag = NG then goto finish
+?>
+<div>
+<?html_save_setting?>
+	<table width='600' align=center border="0" cellspacing="0" cellpadding="0" >
+	<tr><td width = 80%> <h3> Data Table</h3> </td></tr>
+	</table>
+
+<br>
+	<table width='600' align=center border="1" cellspacing="0" cellpadding="0" >
+
+	<?
+		dim row as byte
+		dim i, j, k as byte
+		dim s as string
+		dim stemp as string(4)
+		j = 1
+		row = len(rx_data)/8
+		
+		for i = 0 to row
+			s = s+"<tr>" 
+			for k = 0 to 7
+				stemp = mid(rx_data,j,1)
+				stemp = hex(asc(stemp))
+				stemp = right(stemp,len(stemp)-2)
+				if len(stemp)<2 then stemp = "0"+stemp
+				j = j+1
+				if j > len(rx_data)+1 then stemp = " "
+				s = s+"<td>"+stemp+"</td>"
+			next k
+			s = s+"</tr>"
+			sock_setsend(s)
+			s =""			
+		next i
+	?>
+	</table>
+</div>
+<?finish:
+
+?>
+</body>
+</html>

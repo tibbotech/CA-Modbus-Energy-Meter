@@ -1,0 +1,161 @@
+'*************************************************************************************************************************
+'           LCD Library
+'	This library contains all other reusable function that is related to LCD display
+'*************************************************************************************************************************
+
+include "global.tbh"
+
+public dim lcd_rotate as byte
+
+'=============================================================
+sub lcd_set_contrast(level as byte)
+'Contrast control shares the data bus with the LCD. Initialize LCD first, 
+'then set the contrast (before LCD initialization the bus may be driven by the LCD)
+
+	'enable port, output data
+	io.portnum=PL_IO_PORT_NUM_4
+	io.portenabled=255
+	io.portstate=level
+	
+	'generate strobe for the data register (on the LCD PCB)
+	io.num=PL_IO_NUM_48
+	io.enabled=YES
+	io.state=HIGH
+	io.state=LOW
+	
+	'disable port
+	io.portenabled=0
+end sub
+
+'=============================================================
+public sub lcd_init
+'LCD initialize sequence, varies with different LCD type, or different board layout
+	dim s as string(30)
+	lcd.iomapping="44,46,40,41,43,42,4" 'RST,EN,CS1,CS2,DI,RW,data_bus
+	io.num=PL_IO_NUM_46 'EN
+	io.enabled=YES
+	io.num=PL_IO_NUM_44 'RST
+	io.enabled=YES
+	io.num=PL_IO_NUM_40 'CS1
+	io.enabled=YES
+	io.num=PL_IO_NUM_41 'CS2
+	io.enabled=YES
+	io.num=PL_IO_NUM_42 'R/-W
+	io.enabled=YES
+	io.num=PL_IO_NUM_43 'D/-I
+	io.enabled=YES
+	lcd.width=128
+	lcd.height=64
+	lcd.rotated= NO	
+	lcd.inverted=NO
+	lcd.enabled=YES
+	lcd_set_contrast(255)
+end sub
+
+'=============================================================
+public sub lcd_clear(x as byte, y as byte, width as byte, height as byte)
+'clear the section of the lcd defined by parameters.
+	lcd.forecolor = LCD_BACKCOLOR
+	lcd.fill(x,y,width,height)
+	lcd.forecolor = LCD_FORECOLOR
+end sub
+
+'=============================================================
+public sub lcd_print_msg(byref msg as string,x as byte, y as byte, w as byte, h as byte, bolder as no_yes)
+'This is a popup msgbox, it prints a message on the LCD.
+	romfile.open(LCD_STD_FONT)
+	lcd.setfont(romfile.offset)
+	lcd.textverticalspacing = 1
+	lcd.texthorizontalspacing=1
+	lcd_clear(x,y,w,h)
+	if bolder = YES then lcd.rectangle(x,y,x+w-1,y+h-1)
+	lcd.textalignment = PL_LCD_TEXT_ALIGNMENT_MIDDLE_CENTER
+	lcd.printaligned(msg,x+1,y+3,w-2,h-6)
+end sub
+
+'=============================================================
+sub lcd_display_button(F1_ADD as word,
+	F2_ADD as word,
+	F3_ADD as word,
+	F4_ADD as word, 			'F#_ADD are the offset address of the icon in the BMP file.
+	byref on_off as string(4),  'on_off string consist with 4 characters (0 or 1), which indicates if the icon is highlighted.  For example if on_off = "0100", this means, only icon F2 are highlighted, rest are normal.
+	repaint as no_yes,			'If repaint = yes, then all 4 icons are refreshed, else only the those icons that are previously or now highlighted, are being refreshed.
+	revert as no_yes			'If revert = yes, then switch lcd forecolor and backcolor, meaning those icons which were normal, now are highlighted, and vice versa.
+	)
+'This function prints 4 stored icon images on the LCD, 
+	dim bmp_width as word
+	dim F1_on,F2_on,F3_on,F4_on as no_yes
+	bmp_width = (lcd.width/4)-1
+	if mid(on_off,1,1) = "0" then F1_on = NO else F1_on = YES 
+	if mid(on_off,2,1) = "0" then F2_on = NO else F2_on = YES 
+	if mid(on_off,3,1) = "0" then F3_on = NO else F3_on = YES 
+	if mid(on_off,4,1) = "0" then F4_on = NO else F4_on = YES 
+	
+	if repaint = YES then 
+	romfile.open(ICON_FILE)	
+
+		lcd_clear(0,0,19,lcd.height)
+		lcd_clear(lcd.width-19,0,19,lcd.height)
+		lcd.fill(17,0,2,lcd.height/2-1)
+		lcd.fill(17,lcd.height/2+1,2,lcd.height/2-1)
+		lcd.fill(0,(lcd.height/2)-1,17,2)
+		lcd.fill(lcd.width-19,0,2,lcd.height/2-1)
+		lcd.fill(lcd.width-19,lcd.height/2+1,2,lcd.height/2-1)
+		lcd.fill(lcd.width-17,(lcd.height/2)-1,17,2)
+		lcd.forecolor = LCD_FORECOLOR
+		lcd.backcolor = LCD_BACKCOLOR		
+		if F1_ADD <> BMP_NONE then lcd.bmp(romfile.offset,0,0,F1_ADD,0,17,31)
+		if F2_ADD <> BMP_NONE then lcd.bmp(romfile.offset,0,lcd.height/2+1,F2_ADD,0,17,31)
+		if F3_ADD <> BMP_NONE then lcd.bmp(romfile.offset,lcd.width-17,0,F3_ADD,0,17,31)
+		if F4_ADD <> BMP_NONE then lcd.bmp(romfile.offset,lcd.width-17,lcd.height/2+1,F4_ADD,0,17,31)
+
+	end if
+	romfile.open(ICON_FILE)
+	if revert = NO then
+		lcd.forecolor = LCD_BACKCOLOR
+		lcd.backcolor = LCD_FORECOLOR
+	else
+		lcd.forecolor = LCD_FORECOLOR
+		lcd.backcolor = LCD_BACKCOLOR
+	end if
+
+	if F1_ADD <> BMP_NONE and F1_on = yes then lcd.bmp(romfile.offset,0,0,F1_ADD,0,17,31)
+	if F2_ADD <> BMP_NONE and F2_on = yes then lcd.bmp(romfile.offset,0,lcd.height/2+1,F2_ADD,0,17,31)
+	if F3_ADD <> BMP_NONE and F3_on = yes then lcd.bmp(romfile.offset,lcd.width-17,0,F3_ADD,0,17,31)
+	if F4_ADD <> BMP_NONE and F4_on = yes then lcd.bmp(romfile.offset,lcd.width-17,lcd.height/2+1,F4_ADD,0,17,31)
+
+	lcd.forecolor = LCD_FORECOLOR
+	lcd.backcolor = LCD_BACKCOLOR
+end sub
+
+'=============================================================
+public sub lcd_print_bar(x as byte, y as byte, w as byte, h as byte, per as byte)
+'This subroutin prints a percentage bar on the LCD screen
+	dim i, q, m as byte
+	dim p as word
+	q = w/4
+	m = w mod 4
+	p = (w*per)
+	p = p/100
+	lcd_clear(x,y,w,h)
+	lcd.rectangle(x,y,x+w,y+h)
+	for i = 1 to 3
+		if m > 0 then 
+			lcd.fill(x+(q*i)+1,y,1,h)
+			m = m-1
+		else
+			lcd.fill(x+(q*i),y,1,h)
+		end if
+	next i
+	lcd.fill(x,y,p,h)
+end sub
+
+'=============================================================
+public sub lcd_print_header(s as string)
+'This subroutin prints the "Setup Menu" string on the LCD
+	lcd_clear(19,1,lcd.width-38,12)
+	romfile.open(LCD_STD_FONT)
+	lcd.setfont(romfile.offset)
+	lcd.print(s,26,1)
+	lcd.fill(19, 10, lcd.width-38,2)
+end sub

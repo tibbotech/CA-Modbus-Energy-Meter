@@ -1,0 +1,13 @@
+'This file is for global definitions (that is, if you gonna have any)
+
+'=============================================================
+'	DHCP.TBS
+'=============================================================
+
+declare function dhcp_obtain(byref obtained_ip as string, byref obtained_gateway as string,
+byref obtained_netmask as string, byref obtained_lease_time as dword, device_name as string(32)) as ok_ng 
+
+CONST MSG_HTML_CONFIRM_REBOOT = "Would you like to reboot the device? \\nIP address of the device might change after reboot!"
+const MSG_HTML_CONFIRM_FORMAT = "Warning! All data and settings will be lost!! \\n Would you like to format disk?"
+CONST MSG_HTML_CONFIRM_LOG_OFF = "Would you like to log out?"
+CONST MSG_HTML_CONFIRM_INITIALIZE = "Would you like to initialize the device? \\nSome of the settings will only be effective after reboot!"

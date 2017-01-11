@@ -1,0 +1,4 @@
+Setting	Setting											Setting 
+Name	String											Data
+
+>>PW	Password										S,I,6	^

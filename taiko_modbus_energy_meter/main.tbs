@@ -1,0 +1,177 @@
+include "global.tbh"
+
+dim dhcp_lease_time as dword
+public dim rx_data as string
+
+sub device_alloc_memory(disalloc as sockets, alloc as sockets)
+	dim i,x as byte 
+	'------------- disalloc -------------------
+	select case disalloc
+	case SOCK_HTTP:
+		for i = 0 to NUM_HTTP_SOCKETS-1
+			sock.inconmode=PL_SOCK_INCONMODE_NONE
+			sock.discard
+			while sock.statesimple<>PL_SSTS_CLOSED				
+			wend
+			sock.num = SOCK_HTTP+i
+			sock.txbuffrq(0)
+			sock.rxbuffrq(0)
+			sock.varbuffrq(0)
+		next i
+		sys.buffalloc
+	case SOCK_DHCP,SOCK_HTTP:
+		sock.num = disalloc
+		sock.inconmode=PL_SOCK_INCONMODE_NONE
+		sock.discard
+		while sock.statesimple<>PL_SSTS_CLOSED
+		wend
+		sock.rxbuffrq(0)
+		sock.txbuffrq(0)
+		sys.buffalloc
+	end select
+	'----------------- alloc -------------------
+	select case alloc
+	case SOCK_HTTP:
+		for i = 0 to NUM_HTTP_SOCKETS-1
+			sock.num = SOCK_HTTP+i
+			sock.inconmode=PL_SOCK_INCONMODE_NONE
+			sock.discard
+			while sock.statesimple<>PL_SSTS_CLOSED				
+			wend	
+			sock.txbuffrq(HTTP_TX_SZ)
+			sock.rxbuffrq(1)
+			sock.varbuffrq(1)	
+		next i
+		sys.buffalloc
+		for i = 0 to NUM_HTTP_SOCKETS-1
+			sock.num = SOCK_HTTP+i
+			sock.inconmode=PL_SOCK_INCONMODE_ANY_IP_ANY_PORT
+		next i
+	case SOCK_DHCP:
+		sock.num = SOCK_DHCP
+		sock.inconmode=PL_SOCK_INCONMODE_NONE
+		sock.discard
+		while sock.statesimple<>PL_SSTS_CLOSED			
+		wend
+		sock.txbuffrq(5)
+		sock.rxbuffrq(5)
+		sys.buffalloc
+		sock.inconmode=PL_SOCK_INCONMODE_ANY_IP_ANY_PORT
+	end select
+end sub
+
+sub set_net_ip(s as string(16))
+'Correctly sets new IP for use (from the IP setting)
+	dim x,f as byte
+
+	s=ddval(s)
+	
+	'first number can't be 0 or >223
+	x=asc(left(s,1))
+	if x=0 or x>223 then
+		s=right(s,3)
+		s=chr(1)+s
+	end if
+	
+	'last number can't be 0 or 255
+	x=asc(right(s,1))
+	if x=0 or x=255 then
+		s=left(s,3)+chr(1)
+	end if
+	
+	'shut all sockets!
+	sock.inconenabledmaster=NO 
+	for f=0 to sock.numofsock-1
+		sock.num=f
+		sock.discard
+		while sock.statesimple<>PL_SSTS_CLOSED
+		wend
+	next f
+	
+	'change the IP
+	net.ip=ddstr(s)
+	sock.inconenabledmaster=YES 
+end sub
+
+function device_check_DHCP(init as no_yes) as ok_ng
+	dim f as byte
+	dim dhcp_ip, dhcp_gateway, dhcp_netmask as string(16)
+	dim dhcp_result as ok_ng
+	dhcp_result = OK
+	if init = NO then 
+		dhcp_lease_time = dhcp_lease_time - 1
+	else
+		dhcp_lease_time = 0
+	end if
+	
+	if dhcp_lease_time = 0 then
+		dhcp_result=dhcp_obtain(dhcp_ip, dhcp_gateway, dhcp_netmask, dhcp_lease_time,  "")
+
+	'following code make sure all the socket before changing network properties
+		sock.inconenabledmaster=NO 
+		for f=0 to sock.numofsock-1
+			sock.num=f
+			if sock.statesimple<>PL_SSTS_CLOSED then
+				sock.discard
+				while sock.statesimple<>PL_SSTS_CLOSED	
+				wend
+			end if
+		next f
+		if init = NO then device_alloc_memory(SOCK_DHCP,SOCK_HTTP)
+		if dhcp_result=OK then
+
+		end if
+		set_net_ip(dhcp_ip) 'correct way of setting net.ip!
+		net.gatewayip = dhcp_gateway
+		net.netmask = dhcp_netmask
+		sock.inconenabledmaster=YES 
+	end if
+	device_check_DHCP = dhcp_result
+end function
+
+sub on_sys_init()
+	device_check_DHCP(yes)
+	settings_init
+	html_init
+	
+	lcd_init
+	
+	io.num = PL_IO_NUM_0
+	io.enabled = YES	
+	ser.num = 0
+	ser.baudrate = ser.div9600
+	ser.interface = PL_SER_SI_HALFDUPLEX
+	ser.interchardelay = 50
+	ser.parity = PL_SER_PR_NONE
+	ser.rxbuffrq(1)
+	ser.txbuffrq(1)
+	sys.buffalloc
+	ser.enabled = YES
+	lcd_clear(0,0,lcd.width,lcd.height)
+	lcd_print_msg(net.ip,0,0,lcd.width,20,no)
+	
+	io.num = PL_IO_NUM_0
+	io.state = LOW
+end sub
+
+sub on_ser_data_arrival()
+	rx_data = ""
+	while ser.rxlen > 0 
+		rx_data = rx_data + ser.getdata(255)
+	wend
+
+end sub
+
+
+sub on_sys_timer()
+	if sys.timercount mod 2 =0 then
+		ser.num=0
+		ser.setdata(chr(&h01)+chr(&h03)+chr(&h00)+chr(&h00)+chr(&h00)+chr(&h2B)+chr(&h05)+chr(&hD5))
+		ser.send		
+	end if
+	device_login_timer_proc
+end sub
+
+sub on_button_pressed()
+	settings_restore_def(yes)
+end sub

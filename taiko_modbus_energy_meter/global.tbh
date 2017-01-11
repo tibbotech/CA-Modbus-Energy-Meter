@@ -1,0 +1,17 @@
+'This file is for global definitions (that is, if you gonna have any)
+
+include "settings.tbh"
+include "html_commons.tbh"
+include "dhcp.tbh"
+include "lcd_common.tbh"
+include "html_sessions.tbh"
+include "device.tbh"
+include "html_settings.tbh"
+
+const TAB=9
+const LF=10
+const CR=13
+const STX=2
+const ETX=3
+const NULL=0
+const COMMA = 44
