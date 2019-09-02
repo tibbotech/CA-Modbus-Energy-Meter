@@ -1,0 +1,239 @@
+[project]
+version = 1
+platform = EM2000W
+src_lib_ver = 2_01_03
+name = meter
+output = meter.tpc
+debug = on
+defines = /dLCD_TYPE=SAMSUNG_S6B0108 /dOBJECT_LCD=LCD_ENABLED /dOBJECT_FD=FD_ENABLED /dOBJECT_KP=KP_ENABLED
+transport = udp_broadcast
+
+[address1]
+platform = TPP3W(G2)
+transport = udp_broadcast
+address = 0.127.0.0.22.203
+
+[file1]
+path = main.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = 
+
+[file2]
+path = global.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = 
+
+[file3]
+path = dhcp.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file4]
+path = dhcp.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file5]
+path = lcd_common.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file6]
+path = lcd_common.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file7]
+path = Tibbo-5x7(V).bin
+type = binary
+format = 
+condition = 
+locked = no
+location = project
+
+[file8]
+path = Tibbo-5x7(VP).bin
+type = binary
+format = 
+condition = 
+locked = no
+location = project
+
+[file9]
+path = index.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file10]
+path = tables.css
+type = text
+format = 
+condition = 
+locked = no
+location = project
+
+[file11]
+path = device.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file12]
+path = device.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file13]
+path = html_common.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file14]
+path = html_common.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file15]
+path = html_sessions.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file16]
+path = html_sessions.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file17]
+path = settings.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file18]
+path = settings.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file19]
+path = settings.txt
+type = text
+format = 
+condition = 
+locked = no
+location = project
+
+[file20]
+path = login.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file21]
+path = home.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file22]
+path = table.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file23]
+path = leftpane.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file24]
+path = general.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
+[file25]
+path = general_htm_descr.txt
+type = text
+format = 
+condition = 
+locked = no
+location = project
+
+[file26]
+path = html_settings.tbh
+type = header
+format = 
+condition = 
+locked = no
+location = project
+
+[file27]
+path = html_settings.tbs
+type = basic
+format = 
+condition = 
+locked = no
+location = project
+
+[file28]
+path = httpcmd.html
+type = html
+format = 
+condition = 
+locked = no
+location = project
+
